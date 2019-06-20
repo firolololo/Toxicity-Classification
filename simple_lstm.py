@@ -7,16 +7,16 @@ from keras.preprocessing import text, sequence
 from keras.callbacks import LearningRateScheduler
 
 EMBEDDING_FILES = [
-    '../input/fasttext-crawl-300d-2m/crawl-300d-2M.vec',
-    '../input/glove840b300dtxt/glove.840B.300d.txt'
+    './datas/crawl-300d-2M.vec',
+    './datas/glove.840B.300d.txt'
 ]
 
 NUM_MODELS = 2
-BATCH_SIZE = 512
+BATCH_SIZE = 256
 LSTM_UNITS = 128
 DENSE_HIDDEN_UNITS = 4 * LSTM_UNITS
 EPOCHS = 4
-MAX_LEN = 220
+MAX_LEN = 150
 
 IDENTITY_COLUMNS = [
     'male', 'female', 'homosexual_gay_or_lesbian', 'christian', 'jewish',
@@ -71,8 +71,8 @@ def build_model(embedding_matrix, num_aux_targets):
     return model
 
 
-train_df = pd.read_csv('../input/jigsaw-unintended-bias-in-toxicity-classification/train.csv')
-test_df = pd.read_csv('../input/jigsaw-unintended-bias-in-toxicity-classification/test.csv')
+train_df = pd.read_csv('./datas/train.csv')
+test_df = pd.read_csv('./datas/test.csv')
 
 x_train = train_df[TEXT_COLUMN].astype(str)
 y_train = train_df[TARGET_COLUMN].values
