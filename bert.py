@@ -46,11 +46,11 @@ bert_config = BertConfig('./datas/bert_config.json')
 tokenizer = BertTokenizer.from_pretrained(BERT_MODEL_PATH, do_lower_case=True)
 
 
-train_df = pd.read_csv("./datas/train.csv").sample(10000)
+train_df = pd.read_csv("./datas/train.csv")
 print('train %d records' % len(train_df))
 train_df['comment_text'] = train_df['comment_text'].astype(str)
 
-valid_df = pd.read_csv("./datas/train_multi.csv").sample(10000)
+valid_df = pd.read_csv("./datas/train_multi.csv")
 valid_df['comment_text'] = valid_df['comment_text'].astype(str)
 print('valid %d records' % len(valid_df))
 
