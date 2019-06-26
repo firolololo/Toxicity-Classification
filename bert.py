@@ -5,7 +5,7 @@ import torch.utils.data
 import torch.nn.functional as F
 import numpy as np
 import pandas as pd
-from tqdm import tqdm, tqdm_notebook
+from tqdm import tqdm
 import os
 import warnings
 from pytorch_pretrained_bert import BertTokenizer, BertForSequenceClassification, BertAdam
@@ -46,11 +46,11 @@ bert_config = BertConfig('./datas/bert_config.json')
 tokenizer = BertTokenizer.from_pretrained(BERT_MODEL_PATH, do_lower_case=True)
 
 
-train_df = pd.read_csv("./datas/train.csv")
+train_df = pd.read_csv("./datas/train.csv").sample(10000)
 print('train %d records' % len(train_df))
 train_df['comment_text'] = train_df['comment_text'].astype(str)
 
-valid_df = pd.read_csv("./datas/train_multi.csv")
+valid_df = pd.read_csv("./datas/train_multi.csv").sample(10000)
 valid_df['comment_text'] = valid_df['comment_text'].astype(str)
 print('valid %d records' % len(valid_df))
 
@@ -80,8 +80,8 @@ model.to(device)
 for param in model.parameters():
     param.requires_grad = False
 
-X = train_seqs
-y = train_df['target']
+X = train_seqs[:]
+y = train_df['target'].values[:]
 train_dataset = torch.utils.data.TensorDataset(torch.tensor(X, dtype=torch.long), torch.tensor(y, dtype=torch.float))
 
 output_model_file = "./datas/mybert.bin"
@@ -142,16 +142,13 @@ optimizer = BertAdam(optimizer_grouped_parameters,
                      t_total=num_train_optimization_steps)
 model=model.train()
 
-tq = tqdm_notebook(range(EPOCHS))
-for epoch in tq:
+for epoch in tqdm(range(EPOCHS)):
     train_loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=True)
     avg_loss = 0.
     avg_accuracy = 0.
     lossf = None
-    tk0 = tqdm_notebook(enumerate(train_loader),total=len(train_loader),leave=False)
     optimizer.zero_grad()   # Bug fix - thanks to @chinhuic
-    for i,(x_batch, y_batch) in tk0:
-#        optimizer.zero_grad()
+    for i,(x_batch, y_batch) in tqdm(enumerate(train_loader)):
         y_pred = model(x_batch.to(device), attention_mask=(x_batch>0).to(device), labels=None)
         loss = F.binary_cross_entropy_with_logits(y_pred,y_batch.to(device))
         if (i+1) % accumulation_steps == 0:             # Wait for several backward steps
@@ -161,10 +158,9 @@ for epoch in tq:
             lossf = 0.98*lossf+0.02*loss.item()
         else:
             lossf = loss.item()
-        tk0.set_postfix(loss = lossf)
         avg_loss += loss.item() / len(train_loader)
-        avg_accuracy += torch.mean(((torch.sigmoid(y_pred[:,0])>0.5) == (y_batch[:,0]>0.5).to(device)).to(torch.float) ).item()/len(train_loader)
-    tq.set_postfix(avg_loss=avg_loss,avg_accuracy=avg_accuracy)
+        avg_accuracy += torch.mean(((torch.sigmoid(y_pred[:,0])>0.5) == (y_batch[:,0]>0.5).to(device)).to(torch.float)).item()/len(train_loader)
+    tqdm.write("avg_loss: %f, avg_accuracy: %f" % (avg_loss, avg_accuracy))
 
 
 torch.save(model.state_dict(), output_model_file)
