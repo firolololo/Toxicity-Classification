@@ -150,7 +150,8 @@ for epoch in tqdm(range(EPOCHS)):
     optimizer.zero_grad()   # Bug fix - thanks to @chinhuic
     for i,(x_batch, y_batch) in tqdm(enumerate(train_loader)):
         y_pred = model(x_batch.to(device), attention_mask=(x_batch>0).to(device), labels=None)
-        loss = F.binary_cross_entropy_with_logits(y_pred,y_batch.to(device))
+        y_batch = y_batch.unsqueeze(1)
+        loss = F.binary_cross_entropy_with_logits(y_pred, y_batch.to(device))
         if (i+1) % accumulation_steps == 0:             # Wait for several backward steps
             optimizer.step()                            # Now we can do an optimizer step
             optimizer.zero_grad()
