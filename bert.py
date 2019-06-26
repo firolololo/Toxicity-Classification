@@ -82,6 +82,11 @@ for param in model.parameters():
 
 X = train_seqs[:]
 y = train_df['target'].values[:]
+valid_X = valid_seqs[:]
+valid_y = valid_df['target'].values[:]
+X = np.concatenate((X, valid_X), axis=1)
+y = np.concatenate((y, valid_y), axis=0)
+
 train_dataset = torch.utils.data.TensorDataset(torch.tensor(X, dtype=torch.long), torch.tensor(y, dtype=torch.float))
 
 output_model_file = "./datas/mybert.bin"
